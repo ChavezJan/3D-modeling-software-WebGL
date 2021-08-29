@@ -29,7 +29,7 @@ var rotateAxis = [1, 0, 0];
 var scaleAxis = [1, 1, 1];
 var translateAxis = [0, 0, 0];
 
-var modelMatrix = new Matrix4();
+var modelMatrix = [new Matrix4()];
 
 var index2Remove = 0;
 var index = 0;
@@ -85,6 +85,7 @@ $(document).ready(function() {
 function restart() {
   index = 0;
   arrayFigures = [];
+  modelMatrix = [];
   g_colors = [];
   figure = [];
   arrayColors = [];
@@ -142,9 +143,13 @@ function removeFigure() {
   g_colors = g_colors.filter(function(color) {
     return color !== null;
   });
+  modelMatrix[index2Remove - 1] = null;
+  modelMatrix = modelMatrix.filter(function(mtx) {
+    return mtx !== null;
+  });
 
   document.getElementById("surface").max = (arrayFigures.length + 1);
-  document.getElementById("surface").value = 1;
+  document.getElementById("surface").value = arrayFigures.length ;
 
   if (index === 0) {
     return;
@@ -283,15 +288,36 @@ function rangeSliderOnChange(e) {
 // Change the matrix of the surface
 function changeMatrix() {
 
-  modelMatrix = new Matrix4();
+  console.log("modelMatrix befor");
+  console.log(modelMatrix);
+  console.log(index2Remove);
+
+  if (index2Remove === 0 ) {
+    modelMatrix[index2Remove] = new Matrix4();
+    // rotate
+    modelMatrix[index2Remove].rotate(angleXYZ[0], 1, 0, 0);
+    modelMatrix[index2Remove].rotate(angleXYZ[1], 0, 1, 0);
+    modelMatrix[index2Remove].rotate(angleXYZ[2], 0, 0, 1);
+    // translate
+    modelMatrix[index2Remove].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
+    // scale
+    modelMatrix[index2Remove].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
+
+    return;
+  }
+
+  modelMatrix[index2Remove - 1] = new Matrix4();
   // rotate
-  modelMatrix.rotate(angleXYZ[0], 1, 0, 0);
-  modelMatrix.rotate(angleXYZ[1], 0, 1, 0);
-  modelMatrix.rotate(angleXYZ[2], 0, 0, 1);
+  modelMatrix[index2Remove - 1].rotate(angleXYZ[0], 1, 0, 0);
+  modelMatrix[index2Remove - 1].rotate(angleXYZ[1], 0, 1, 0);
+  modelMatrix[index2Remove - 1].rotate(angleXYZ[2], 0, 0, 1);
   // translate
-  modelMatrix.translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
+  modelMatrix[index2Remove - 1].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
   // scale
-  modelMatrix.scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
+  modelMatrix[index2Remove - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
+
+  console.log("modelMatrix after");
+  console.log(modelMatrix);
 
 }
 function changeColor() {
@@ -340,6 +366,8 @@ function main() {
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
+  console.log("modelMatrix");
+  console.log(modelMatrix);
   requestAnimationFrame(update, canvas);
 }
 
@@ -347,7 +375,7 @@ function main() {
 // funtionality functions
 //------------------------------------------------
 
-function initVertexBuffers(gl, vertices, colors) {
+function initVertexBuffers(gl, vertices, colors, indexMatrix) {
   var n = vertices.length / 3;
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -362,37 +390,16 @@ function initVertexBuffers(gl, vertices, colors) {
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
 
-
-  // TODO: enable individual modification
-  /* ...Axis =
-              0 - X
-              1 - Y
-              2 - Z
-  */
-
-
-
-  //modelMatrix = new Matrix4();
-  /*
-  modelMatrix.setRotate(angleXYZ[0], 0.5, 0.0, 0.0);
-  modelMatrix.setRotate(angleXYZ[1], 0.0, 0.5, 0.0);
-  modelMatrix.setRotate(angleXYZ[2], 0.0, 0.0, 0.5);
-//////
-  modelMatrix.rotate(angleXYZ[0],rotateAxis[0] ,rotateAxis[1] ,rotateAxis[2] );
-  modelMatrix.rotate(angleXYZ[1],rotateAxis[0] ,rotateAxis[1] ,rotateAxis[2] );
-  modelMatrix.rotate(angleXYZ[2],rotateAxis[0] ,rotateAxis[1] ,rotateAxis[2] );
-
-  modelMatrix.translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
-  modelMatrix.scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
-*/
-
   var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   if (!u_ModelMatrix) {
     console.log('Failed to get location of u_ModelMatrix');
     return;
   }
 
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  //for (var i = 0; i < modelMatrix.length; i++) {
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix[indexMatrix].elements);
+  //}
+
 
   var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
   if (!u_ViewMatrix) {
@@ -444,7 +451,7 @@ function update() {
 function draw(gl) {
   gl.clear(gl.COLOR_BUFFER_BIT);
   for (var i = 0; i < arrayFigures.length; i++) {
-    var n = initVertexBuffers(gl, new Float32Array(arrayFigures[i]), new Float32Array(g_colors[i]));
+    var n = initVertexBuffers(gl, new Float32Array(arrayFigures[i]), new Float32Array(g_colors[i]),i);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
   }
 }
@@ -454,7 +461,8 @@ function draw(gl) {
 //------------------------------------------------
 function rightClick(ev, gl) {
   document.getElementById("surface").max = (arrayFigures.length + 1);
-  modelMatrix.push(null);
+  document.getElementById("surface").value = arrayFigures.length + 1;
+  modelMatrix.push(new Matrix4());
   if (arrayFigures[index]) {
     index++;
   }
@@ -472,11 +480,12 @@ function click(ev, gl, canvas) {
     if (arrayFigures.length <= index) {
       figure = [];
       arrayFigures.push(figure);
-      //modelMatrix[index] = new Matrix4();
+      //modelMatrix.push(new Matrix4());
       arrayColors = [];
       g_colors.push(arrayColors);
     }
 
+    modelMatrix[index] = new Matrix4();
 
     arrayFigures[index].push(x);
     arrayFigures[index].push(y);
@@ -499,12 +508,14 @@ function click(ev, gl, canvas) {
     g_colors[index].push(color);
     */
 
-    console.log(arrayColors);
-    console.log("----");
+    console.log("index");
     console.log(index);
-    console.log("00000");
-    console.log(g_colors);
-    console.log("----");
+    console.log("modelMatrix");
+    console.log(modelMatrix);
+    console.log("index2Remove");
+    console.log(index2Remove);
+
+
     // figure -> modificar contenido para modificar individualmente para obtener movimiento por poligono individual
   }
 }
