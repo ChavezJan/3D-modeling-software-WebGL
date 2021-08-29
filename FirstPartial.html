@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <style>
+    html {
+      font-size: 14px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+  <title> First Partial V0.2 </title>
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2021.2.616/styles/kendo.common-material.min.css" />
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2021.2.616/styles/kendo.material.min.css" />
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2021.2.616/styles/kendo.material.mobile.min.css" />
+  <link rel="stylesheet" href="https://demos.telerik.com/kendo-ui/content/shared/styles/examples-offline.css">
+</head>
+
+<body onload="main()">
+  <table>
+    <tr>
+      <td>
+        <canvas id="webgl" width="600" height="400">
+          Please use a browser that supports canvas
+        </canvas>
+      </td>
+      <td style="width: 60%;">
+        <table>
+          <tr>
+            <td>
+              <ul id="fieldlist2">
+                <h1>Axis</h1>
+                <li>
+                  <input type="radio" name="axis" id="x-axis" class="k-radio" checked="checked" onclick="changeAxis()">
+                  <label class="k-radio-label" for="x-axis">X</label>
+                </li>
+                <li>
+                  <input type="radio" name="axis" id="y-axis" class="k-radio" onclick="changeAxis()">
+                  <label class="k-radio-label" for="y-axis">Y</label>
+                </li>
+                <li>
+                  <input type="radio" name="axis" id="z-axis" class="k-radio" onclick="changeAxis()">
+                  <label class="k-radio-label" for="z-axis">Z</label>
+                </li>
+              </ul>
+            </td>
+            <td>
+              <h1>Scale</h1>
+              <li>
+                <input type="number" min="-10" max="10" name="scaleX" id="scaleX" value="1" onchange="ScaleAxis()">
+                <label for="scaleX">X</label>
+              </li>
+              <li>
+                <input type="number" min="-10" max="10" name="scaleY" id="scaleY" value="1" onchange="ScaleAxis()">
+                <label for="scaleY">Y</label>
+              <li>
+                <input type="number" min="-10" max="10" name="scaleZ" id="scaleZ" value="1" onchange="ScaleAxis()">
+                <label for="scaleZ">Z</label>
+              </li>
+            </td>
+            <td>
+              <h1>Translate</h1>
+              <li>
+                <input type="number" min="-10" max="10" name="translateX" id="translateX" value="0" onchange="TranslateAxis()">
+                <label for="translateX">X</label>
+              </li>
+              <li>
+                <input type="number" min="-10" max="10" name="translateY" id="translateY" value="0" onchange="TranslateAxis()">
+                <label for="translateX">Y</label>
+              </li>
+              <li>
+                <input type="number" min="-10" max="10" name="translateZ" id="translateZ" value="0" onchange="TranslateAxis()">
+                <label for="translateZ">Z</label>
+              </li>
+            </td>
+            <td>
+              <li>
+                <button id="restart" class="k-primary" onclick="restart()">Restart</button>
+              </li>
+              <li>
+                <input type="color" name="color" id="color" value="0" onchange="changeColor()">
+
+              </li>
+            </td>
+          </tr>
+        </table>
+        <ul  id="fieldlist">
+          <li>
+            <label for="surface">surface selecter</label>
+            <input type="number" name="surface" id="surface" value="1" min="1" max="1" >
+            <button id="removeFigure" class="k-primary" onclick="removeFigure()">Remove Figure</button>
+          </li>
+          <li>
+            <label>Rotation</label>
+            <input style="width: 80%;" id="slider" />
+          </li>
+          <li>
+            <label>Rotation Range</label>
+            <div style="width: 80%;" id="rangeslider">
+              <input />
+              <input />
+            </div>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="width: 100%;">
+        <div class="box">
+          <h4>Console log</h4>
+          <div class="console"></div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <style>
+    #fieldlist {
+      margin: 0 0 -2em;
+      padding: 0;
+      text-align: center;
+    }
+
+    #fieldlist>li {
+      list-style: none;
+      padding-bottom: 2em;
+    }
+
+    #fieldlist label {
+      display: block;
+      padding-bottom: 1em;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: #444;
+    }
+
+    #fieldlist2 {
+      margin: 0 5em 2em;
+      padding: 0;
+    }
+
+    #fieldlist2 li {
+      list-style: none;
+      padding-bottom: 1em;
+    }
+  </style>
+
+  <script src="https://kendo.cdn.telerik.com/2021.2.616/js/jquery.min.js"></script>
+  <script src="https://kendo.cdn.telerik.com/2021.2.616/js/kendo.all.min.js"></script>
+  <script src="https://demos.telerik.com/kendo-ui/content/shared/js/console.js"></script>
+  <script src="lib/webgl-utils.js"> </script>
+  <script src="lib/webgl-debug.js"> </script>
+  <script src="lib/cuon-utils.js"> </script>
+  <script src="lib/cuon-matrix.js"> </script>
+  <script src="FirstPartial.js"> </script>
+</body>
+
+</html>
