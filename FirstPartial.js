@@ -20,6 +20,8 @@ var FSHADER_SOURCE = `
 //------------------------------------------------
 // global variable
 //------------------------------------------------
+// TODO: clean trash var
+// TODO: make array to save the value of each figure
 
 // Axis
 // ...Axis[0] -> x
@@ -31,7 +33,7 @@ var translateAxis = [0, 0, 0];
 
 var modelMatrix = [new Matrix4()];
 
-var index2Remove = 0;
+var selectedFigure = 1;
 var index = 0;
 
 var angle = 0.0;
@@ -118,9 +120,9 @@ function restart() {
 // done
 function removeFigure() {
 
-  index2Remove = document.getElementById("surface").value;
+  selectedFigure = document.getElementById("surface").value;
 
-  if (index < index2Remove - 1) {
+  if (index < selectedFigure - 1) {
     var maxNumber = arrayFigures.length + 1;
     kendoConsole.log("1 " + maxNumber);
     kendoConsole.log("Choose between this numbers");
@@ -129,21 +131,21 @@ function removeFigure() {
     return;
   }
 
-  if (index2Remove - 1 === 0 && index === 0 && figure === null) {
+  if (selectedFigure - 1 === 0 && index === 0 && figure === null) {
     kendoConsole.log("nothing to delete");
     return;
   }
 
-  arrayFigures[index2Remove - 1] = null;
+  arrayFigures[selectedFigure - 1] = null;
   arrayFigures = arrayFigures.filter(function(item) {
     return item !== null;
   });
 
-  g_colors[index2Remove - 1] = null;
+  g_colors[selectedFigure - 1] = null;
   g_colors = g_colors.filter(function(color) {
     return color !== null;
   });
-  modelMatrix[index2Remove - 1] = null;
+  modelMatrix[selectedFigure - 1] = null;
   modelMatrix = modelMatrix.filter(function(mtx) {
     return mtx !== null;
   });
@@ -167,8 +169,7 @@ function removeFigure() {
 //------------------------------------------------
 
 // work with all the surface, not individual
-// In work
-// TODO: fix slider
+// done
 function changeAxis() {
   var xAxis = document.getElementById("x-axis");
   var yAxis = document.getElementById("y-axis");
@@ -229,7 +230,7 @@ function TranslateAxis() {
 // sliders
 //------------------------------------------------
 
-// TODO: make function of changeAngleXYZ;
+// TODO: make function of changeAngleXYZ
 function sliderOnSlide(e) {
   kendoConsole.log("Slide :: new slide value is: " + e.value);
   angle = e.value;
@@ -260,11 +261,11 @@ function sliderOnChange(e) {
   }
   changeMatrix();
 }
-// paraque?
+// done
 function rangeSliderOnSlide(e) {
   kendoConsole.log("Slide :: new slide values are: " + e.value.toString().replace(",", " - "));
 }
-// check if it fix the slider issue
+// done
 function rangeSliderOnChange(e) {
   kendoConsole.log("Change :: new values are: " + e.value.toString().replace(",", " - "));
   var slider = $("#slider").data("kendoSlider");
@@ -284,40 +285,21 @@ function rangeSliderOnChange(e) {
 // Change functions
 //------------------------------------------------
 
-// TODO: Individual movment
+
 // Change the matrix of the surface
+// done
 function changeMatrix() {
 
-  console.log("modelMatrix befor");
-  console.log(modelMatrix);
-  console.log(index2Remove);
 
-  if (index2Remove === 0 ) {
-    modelMatrix[index2Remove] = new Matrix4();
-    // rotate
-    modelMatrix[index2Remove].rotate(angleXYZ[0], 1, 0, 0);
-    modelMatrix[index2Remove].rotate(angleXYZ[1], 0, 1, 0);
-    modelMatrix[index2Remove].rotate(angleXYZ[2], 0, 0, 1);
-    // translate
-    modelMatrix[index2Remove].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
-    // scale
-    modelMatrix[index2Remove].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
-
-    return;
-  }
-
-  modelMatrix[index2Remove - 1] = new Matrix4();
+  modelMatrix[selectedFigure - 1] = new Matrix4();
   // rotate
-  modelMatrix[index2Remove - 1].rotate(angleXYZ[0], 1, 0, 0);
-  modelMatrix[index2Remove - 1].rotate(angleXYZ[1], 0, 1, 0);
-  modelMatrix[index2Remove - 1].rotate(angleXYZ[2], 0, 0, 1);
+  modelMatrix[selectedFigure - 1].rotate(angleXYZ[0], 1, 0, 0);
+  modelMatrix[selectedFigure - 1].rotate(angleXYZ[1], 0, 1, 0);
+  modelMatrix[selectedFigure - 1].rotate(angleXYZ[2], 0, 0, 1);
   // translate
-  modelMatrix[index2Remove - 1].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
+  modelMatrix[selectedFigure - 1].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
   // scale
-  modelMatrix[index2Remove - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
-
-  console.log("modelMatrix after");
-  console.log(modelMatrix);
+  modelMatrix[selectedFigure - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
 
 }
 function changeColor() {
@@ -444,6 +426,11 @@ function initVertexBuffers(gl, vertices, colors, indexMatrix) {
 
 function update() {
   //angle += 1.0;
+
+  if(selectedFigure !== document.getElementById("surface").value){
+    selectedFigure = document.getElementById("surface").value;
+  }
+
   draw(gl);
   requestAnimationFrame(update, canvas);
 }
@@ -459,15 +446,20 @@ function draw(gl) {
 //------------------------------------------------
 // Clicks
 //------------------------------------------------
+// done
 function rightClick(ev, gl) {
   document.getElementById("surface").max = (arrayFigures.length + 1);
   document.getElementById("surface").value = arrayFigures.length + 1;
+
+  selectedFigure = arrayFigures.length + 1;
+  kendoConsole.log(selectedFigure);
+
   modelMatrix.push(new Matrix4());
   if (arrayFigures[index]) {
     index++;
   }
 }
-
+// done
 function click(ev, gl, canvas) {
   if (event.buttons == 1) {
     var x = ev.clientX;
@@ -512,8 +504,8 @@ function click(ev, gl, canvas) {
     console.log(index);
     console.log("modelMatrix");
     console.log(modelMatrix);
-    console.log("index2Remove");
-    console.log(index2Remove);
+    console.log("selectedFigure");
+    console.log(selectedFigure);
 
 
     // figure -> modificar contenido para modificar individualmente para obtener movimiento por poligono individual
