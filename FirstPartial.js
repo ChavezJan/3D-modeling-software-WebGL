@@ -31,13 +31,12 @@ var rotateAxis = [1, 0, 0];
 var scaleAxis = [1, 1, 1];
 var translateAxis = [0, 0, 0];
 
-var modelMatrix = [new Matrix4()];
+// angle
+var angle = 0.0;
+var angleXYZ = [0.0, 0.0, 0.0];
 
 var selectedFigure = 1;
 var index = 0;
-
-var angle = 0.0;
-var angleXYZ = [0.0, 0.0, 0.0];
 
 var canvas;
 var gl;
@@ -45,14 +44,16 @@ var gl;
 // Figure
 var arrayFigures = [];
 var figure = [];
-// Figure history 
+var modelMatrix = [new Matrix4()];
+
+// Figure history
 var figureHistory = [];
 var arrayOfHistory = [figureHistory];
 
 // Color
 var g_colors = [];
 var arrayColors = [];
-var color = 0.0;
+var documentColor = 0.0;
 var colors = [];
 
 // max and min of the rangeslider
@@ -86,6 +87,7 @@ $(document).ready(function() {
 //------------------------------------------------
 
 // keeps a record about the important values of each axis in each figure
+// done
 function addHistory() {
 
   figureHistory.push(rotateAxis[0],rotateAxis[1],rotateAxis[2]);
@@ -109,6 +111,8 @@ function restart() {
   g_colors = [];
   figure = [];
   arrayColors = [];
+  arrayOfHistory = [];
+  arrayFigures = [];
 
   // restart translate
   document.getElementById("translateX").value = 0;
@@ -163,8 +167,14 @@ function removeFigure() {
   g_colors = g_colors.filter(function(color) {
     return color !== null;
   });
+
   modelMatrix[selectedFigure - 1] = null;
   modelMatrix = modelMatrix.filter(function(mtx) {
+    return mtx !== null;
+  });
+
+  arrayOfHistory[selectedFigure - 1] = null;
+  arrayOfHistory = arrayOfHistory.filter(function(mtx) {
     return mtx !== null;
   });
 
@@ -182,6 +192,29 @@ function removeFigure() {
   }
 }
 
+function resetInput() {
+
+  // restart translate
+  document.getElementById("translateX").value = 0;
+  document.getElementById("translateY").value = 0;
+  document.getElementById("translateZ").value = 0;
+
+  // restart scale
+  document.getElementById("scaleX").value = 1;
+  document.getElementById("scaleY").value = 1;
+  document.getElementById("scaleZ").value = 1;
+
+  // restart sliders
+  var slider = $("#slider").data("kendoSlider");
+  slider.value(0);
+
+  angleXYZ[0] = 0.0;
+  angleXYZ[1] = 0.0;
+  angleXYZ[2] = 0.0;
+
+  changeMatrix();
+
+}
 //------------------------------------------------
 // Axis inputs
 //------------------------------------------------
@@ -248,14 +281,14 @@ function TranslateAxis() {
 // sliders
 //------------------------------------------------
 
-// TODO: make function of changeAngleXYZ
+// done
 function sliderOnSlide(e) {
   kendoConsole.log("Slide :: new slide value is: " + e.value);
   angle = e.value;
 
 changeAngle(angle,angle,angle);
 }
-// TODO: make function of changeAngleXYZ;
+// done
 function sliderOnChange(e) {
   kendoConsole.log("Change :: new value is: " + e.value);
   angle = e.value;
@@ -285,8 +318,7 @@ function rangeSliderOnChange(e) {
 // Change functions
 //------------------------------------------------
 
-
-// Change the matrix of the surface
+// Change the matrix of the Figure
 // done
 function changeMatrix() {
 
@@ -300,10 +332,15 @@ function changeMatrix() {
   modelMatrix[selectedFigure - 1].translate(translateAxis[0] / 10, translateAxis[1] / 10, translateAxis[2] / 10);
   // scale
   modelMatrix[selectedFigure - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
+  if (figure.length >= 3) {
 
-  //updateHistory();
+  updateHistory();
+}
+  console.log("arrayOfHistory");
+  console.log(arrayOfHistory);
 
 }
+// done
 function changeAngle(angleX,angleY,angleZ){
   var slider = $("#slider").data("kendoSlider");
 
@@ -319,24 +356,27 @@ function changeAngle(angleX,angleY,angleZ){
     angleXYZ[2] = angleZ;
     slider.value(angleZ);
   }
-  changeMatrix();
+    changeMatrix();
+
+
 }
 // in progress
 function changeColor() {
 
-  kendoConsole.log(document.getElementById("color").value);
 
-  color = document.getElementById("color").value;
+//  colors = []
 
-  var red = parseInt(color.substr(1, 2), 16);
-  var blue = parseInt(color.substr(3, 2), 16);
-  var green = parseInt(color.substr(5, 2), 16);
+  documentColor = document.getElementById("color").value;
 
-  kendoConsole.log("New color: R: " + red + " G: " + green + " B: " + blue);
+  colors.push(parseInt(color.substr(1, 2), 16));
+  colors.push(parseInt(color.substr(3, 2), 16));
+  colors.push(parseInt(color.substr(5, 2), 16));
 
-  colors.push(red / 255);
-  colors.push(blue / 255);
-  colors.push(green / 255);
+  kendoConsole.log("New color: R: " + colors[0] + " G: " + colors[1] + " B: " + colors[2]);
+
+
+
+
 
 }
 
@@ -437,6 +477,7 @@ function initVertexBuffers(gl, vertices, colors, indexMatrix) {
     return;
   }
 
+
   gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Color);
   gl.enable(gl.DEPTH_TEST);
@@ -448,42 +489,63 @@ function update() {
   //angle += 1.0;
 
   if(selectedFigure !== document.getElementById("surface").value){
+
     selectedFigure = document.getElementById("surface").value;
+
+    if(arrayOfHistory.length > 1 && figure.length >= 3){
+
+      updateValues();
+
+    }
   }
+
+
+
 
   draw(gl);
   requestAnimationFrame(update, canvas);
 }
-
+// done
 function updateValues () {
 
-  document.getElementById("scaleX").value =arrayOfHistory[selectedFigure][1][0];
-  document.getElementById("scaleY").value =arrayOfHistory[selectedFigure][1][1];
-  document.getElementById("scaleZ").value =arrayOfHistory[selectedFigure][1][2];
+  document.getElementById("scaleX").value = arrayOfHistory[selectedFigure - 1][3];
+  document.getElementById("scaleY").value =arrayOfHistory[selectedFigure - 1][4];
+  document.getElementById("scaleZ").value =arrayOfHistory[selectedFigure - 1][5];
 
-  document.getElementById("translateX").value =arrayOfHistory[selectedFigure][2][2];
-  document.getElementById("translatey").value =arrayOfHistory[selectedFigure][2][2];
-  document.getElementById("translatez").value = arrayOfHistory[selectedFigure][2][2];
+  document.getElementById("translateX").value =arrayOfHistory[selectedFigure - 1][6];
+  document.getElementById("translateY").value =arrayOfHistory[selectedFigure - 1][7];
+  document.getElementById("translateZ").value = arrayOfHistory[selectedFigure - 1][8];
 
-  angleXYZ[0] =  arrayOfHistory[selectedFigure][3][0];
-  angleXYZ[1] =  arrayOfHistory[selectedFigure][3][1];
-  angleXYZ[2] =  arrayOfHistory[selectedFigure][3][2];
+  angleXYZ[0] =  arrayOfHistory[selectedFigure - 1][9];
+  angleXYZ[1] =  arrayOfHistory[selectedFigure - 1][10];
+  angleXYZ[2] =  arrayOfHistory[selectedFigure - 1][11];
 
 
   changeAngle(angleXYZ[0],angleXYZ[1],angleXYZ[2]);
 
 
 }
-
+// done
 function updateHistory () {
 
- arrayOfHistory[selectedFigure - 1][0] = rotateAxis;
- arrayOfHistory[selectedFigure - 1][1] = scaleAxis;
- arrayOfHistory[selectedFigure - 1][2] = translateAxis;
- arrayOfHistory[selectedFigure - 1][3] = angleXYZ;
+ arrayOfHistory[selectedFigure - 1][0] = rotateAxis[0];
+ arrayOfHistory[selectedFigure - 1][1] = rotateAxis[1];
+ arrayOfHistory[selectedFigure - 1][2] = rotateAxis[2];
+
+ arrayOfHistory[selectedFigure - 1][3] = scaleAxis[0];
+ arrayOfHistory[selectedFigure - 1][4] = scaleAxis[1];
+ arrayOfHistory[selectedFigure - 1][5] = scaleAxis[2];
+
+ arrayOfHistory[selectedFigure - 1][6] = translateAxis[0];
+ arrayOfHistory[selectedFigure - 1][7] = translateAxis[1];
+ arrayOfHistory[selectedFigure - 1][8] = translateAxis[2];
+
+ arrayOfHistory[selectedFigure - 1][9] = angleXYZ[0];
+ arrayOfHistory[selectedFigure - 1][10] = angleXYZ[1];
+ arrayOfHistory[selectedFigure - 1][11] = angleXYZ[2];
 
 }
-
+// done
 function draw(gl) {
   gl.clear(gl.COLOR_BUFFER_BIT);
   for (var i = 0; i < arrayFigures.length; i++) {
@@ -504,16 +566,13 @@ function rightClick(ev, gl) {
   selectedFigure = arrayFigures.length + 1;
   kendoConsole.log(selectedFigure);
 
-
-
   if (arrayFigures[index]) {
     addHistory();
     figureHistory = [];
+    figure = [];
 
-    console.log("arrayOfHistory");
-    console.log(arrayOfHistory);
-    console.log("figureHistory");
-    console.log(figureHistory);
+    resetInput();
+
     modelMatrix.push(new Matrix4());
     index++;
   }
@@ -537,7 +596,7 @@ function click(ev, gl, canvas) {
       g_colors.push(arrayColors);
     }
 
-    modelMatrix[index] = new Matrix4();
+    //modelMatrix[index] = new Matrix4();
 
     arrayFigures[index].push(x);
     arrayFigures[index].push(y);
@@ -560,14 +619,9 @@ function click(ev, gl, canvas) {
     g_colors[index].push(color);
     */
 
-    console.log("index");
-    console.log(index);
-    console.log("modelMatrix");
-    console.log(modelMatrix);
-    console.log("selectedFigure");
-    console.log(selectedFigure);
+    console.log("figure");
+    console.log(figure);
 
 
-    // figure -> modificar contenido para modificar individualmente para obtener movimiento por poligono individual
   }
 }
