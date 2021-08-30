@@ -45,6 +45,9 @@ var gl;
 // Figure
 var arrayFigures = [];
 var figure = [];
+// Figure history 
+var figureHistory = [];
+var arrayOfHistory = [figureHistory];
 
 // Color
 var g_colors = [];
@@ -77,6 +80,21 @@ $(document).ready(function() {
     tickPlacement: "both"
   });
 });
+
+//------------------------------------------------
+// figure history
+//------------------------------------------------
+
+// keeps a record about the important values of each axis in each figure
+function addHistory() {
+
+  figureHistory.push(rotateAxis[0],rotateAxis[1],rotateAxis[2]);
+  figureHistory.push(scaleAxis[0],scaleAxis[1],scaleAxis[2]);
+  figureHistory.push(translateAxis[0],translateAxis[1],translateAxis[2]);
+  figureHistory.push(angleXYZ[0],angleXYZ[1],angleXYZ[2]);
+  arrayOfHistory[index] = figureHistory;
+
+}
 
 //------------------------------------------------
 // restart functions
@@ -235,31 +253,13 @@ function sliderOnSlide(e) {
   kendoConsole.log("Slide :: new slide value is: " + e.value);
   angle = e.value;
 
-  if (rotateAxis[0] === 1) {
-    angleXYZ[0] = e.value;
-  }
-  if (rotateAxis[1] === 1) {
-    angleXYZ[1] = e.value;
-  }
-  if (rotateAxis[2] === 1) {
-    angleXYZ[2] = e.value;
-  }
-  changeMatrix();
+changeAngle(angle,angle,angle);
 }
 // TODO: make function of changeAngleXYZ;
 function sliderOnChange(e) {
   kendoConsole.log("Change :: new value is: " + e.value);
   angle = e.value;
-  if (rotateAxis[0] === 1) {
-    angleXYZ[0] = e.value;
-  }
-  if (rotateAxis[1] === 1) {
-    angleXYZ[1] = e.value;
-  }
-  if (rotateAxis[2] === 1) {
-    angleXYZ[2] = e.value;
-  }
-  changeMatrix();
+changeAngle(angle,angle,angle);
 }
 // done
 function rangeSliderOnSlide(e) {
@@ -301,7 +301,27 @@ function changeMatrix() {
   // scale
   modelMatrix[selectedFigure - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
 
+  //updateHistory();
+
 }
+function changeAngle(angleX,angleY,angleZ){
+  var slider = $("#slider").data("kendoSlider");
+
+  if (rotateAxis[0] === 1) {
+    angleXYZ[0] = angleX;
+    slider.value(angleX);
+  }
+  if (rotateAxis[1] === 1) {
+    angleXYZ[1] = angleY;
+    slider.value(angleY);
+  }
+  if (rotateAxis[2] === 1) {
+    angleXYZ[2] = angleZ;
+    slider.value(angleZ);
+  }
+  changeMatrix();
+}
+// in progress
 function changeColor() {
 
   kendoConsole.log(document.getElementById("color").value);
@@ -423,7 +443,7 @@ function initVertexBuffers(gl, vertices, colors, indexMatrix) {
   gl.depthFunc(gl.LESS);
   return n;
 }
-
+// updates the web view
 function update() {
   //angle += 1.0;
 
@@ -433,6 +453,35 @@ function update() {
 
   draw(gl);
   requestAnimationFrame(update, canvas);
+}
+
+function updateValues () {
+
+  document.getElementById("scaleX").value =arrayOfHistory[selectedFigure][1][0];
+  document.getElementById("scaleY").value =arrayOfHistory[selectedFigure][1][1];
+  document.getElementById("scaleZ").value =arrayOfHistory[selectedFigure][1][2];
+
+  document.getElementById("translateX").value =arrayOfHistory[selectedFigure][2][2];
+  document.getElementById("translatey").value =arrayOfHistory[selectedFigure][2][2];
+  document.getElementById("translatez").value = arrayOfHistory[selectedFigure][2][2];
+
+  angleXYZ[0] =  arrayOfHistory[selectedFigure][3][0];
+  angleXYZ[1] =  arrayOfHistory[selectedFigure][3][1];
+  angleXYZ[2] =  arrayOfHistory[selectedFigure][3][2];
+
+
+  changeAngle(angleXYZ[0],angleXYZ[1],angleXYZ[2]);
+
+
+}
+
+function updateHistory () {
+
+ arrayOfHistory[selectedFigure - 1][0] = rotateAxis;
+ arrayOfHistory[selectedFigure - 1][1] = scaleAxis;
+ arrayOfHistory[selectedFigure - 1][2] = translateAxis;
+ arrayOfHistory[selectedFigure - 1][3] = angleXYZ;
+
 }
 
 function draw(gl) {
@@ -447,6 +496,7 @@ function draw(gl) {
 // Clicks
 //------------------------------------------------
 // done
+// end the figure and start another one
 function rightClick(ev, gl) {
   document.getElementById("surface").max = (arrayFigures.length + 1);
   document.getElementById("surface").value = arrayFigures.length + 1;
@@ -454,12 +504,22 @@ function rightClick(ev, gl) {
   selectedFigure = arrayFigures.length + 1;
   kendoConsole.log(selectedFigure);
 
-  modelMatrix.push(new Matrix4());
+
+
   if (arrayFigures[index]) {
+    addHistory();
+    figureHistory = [];
+
+    console.log("arrayOfHistory");
+    console.log(arrayOfHistory);
+    console.log("figureHistory");
+    console.log(figureHistory);
+    modelMatrix.push(new Matrix4());
     index++;
   }
 }
 // done
+// adds a new vector
 function click(ev, gl, canvas) {
   if (event.buttons == 1) {
     var x = ev.clientX;
