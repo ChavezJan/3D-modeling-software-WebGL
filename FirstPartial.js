@@ -21,7 +21,7 @@ var FSHADER_SOURCE = `
 // global variable
 //------------------------------------------------
 // TODO: clean trash var
-// TODO: make array to save the value of each figure
+
 
 // Axis
 // ...Axis[0] -> x
@@ -54,7 +54,7 @@ var arrayOfHistory = [figureHistory];
 var g_colors = [];
 var arrayColors = [];
 var documentColor = 0.0;
-var colors = [];
+var colors = []; // not in use
 
 // max and min of the rangeslider
 var min = -360;
@@ -107,7 +107,7 @@ function addHistory() {
 function restart() {
   index = 0;
   arrayFigures = [];
-  modelMatrix = [];
+  modelMatrix = [new Matrix4()];
   g_colors = [];
   figure = [];
   arrayColors = [];
@@ -191,7 +191,7 @@ function removeFigure() {
     index--;
   }
 }
-
+// restart all the imputs for the new figure
 function resetInput() {
 
   // restart translate
@@ -215,6 +215,7 @@ function resetInput() {
   changeMatrix();
 
 }
+
 //------------------------------------------------
 // Axis inputs
 //------------------------------------------------
@@ -322,7 +323,6 @@ function rangeSliderOnChange(e) {
 // done
 function changeMatrix() {
 
-
   modelMatrix[selectedFigure - 1] = new Matrix4();
   // rotate
   modelMatrix[selectedFigure - 1].rotate(angleXYZ[0], 1, 0, 0);
@@ -334,7 +334,7 @@ function changeMatrix() {
   modelMatrix[selectedFigure - 1].scale(scaleAxis[0], scaleAxis[1], scaleAxis[2]);
   if (figure.length >= 3) {
 
-  updateHistory();
+//  updateHistory();
 }
   console.log("arrayOfHistory");
   console.log(arrayOfHistory);
@@ -363,20 +363,13 @@ function changeAngle(angleX,angleY,angleZ){
 // in progress
 function changeColor() {
 
-
-//  colors = []
-
   documentColor = document.getElementById("color").value;
 
   colors.push(parseInt(color.substr(1, 2), 16));
   colors.push(parseInt(color.substr(3, 2), 16));
   colors.push(parseInt(color.substr(5, 2), 16));
 
-  kendoConsole.log("New color: R: " + colors[0] + " G: " + colors[1] + " B: " + colors[2]);
-
-
-
-
+  kendoConsole.log("New color: Red: " + colors[0] + " Green: " + colors[1] + " Blue: " + colors[2]);
 
 }
 
@@ -438,9 +431,8 @@ function initVertexBuffers(gl, vertices, colors, indexMatrix) {
     return;
   }
 
-  //for (var i = 0; i < modelMatrix.length; i++) {
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix[indexMatrix].elements);
-  //}
+
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix[indexMatrix].elements);
 
 
   var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
@@ -461,7 +453,7 @@ function initVertexBuffers(gl, vertices, colors, indexMatrix) {
 
   var projMatrix = new Matrix4();
   //projMatrix.setOrtho(-1.0,1.0,-1.0,1.0,1.0,2.0);
-  projMatrix.setPerspective(70.0, 1.0, 0.1, 5.0);
+  projMatrix.setPerspective(60.0, 1.0, 0.1, 5.0);
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
 
@@ -494,18 +486,15 @@ function update() {
 
     if(arrayOfHistory.length > 1 && figure.length >= 3){
 
-      updateValues();
+      //updateValues();
 
     }
   }
 
-
-
-
   draw(gl);
   requestAnimationFrame(update, canvas);
 }
-// done
+// fail issue ()
 function updateValues () {
 
   document.getElementById("scaleX").value = arrayOfHistory[selectedFigure - 1][3];
@@ -525,8 +514,11 @@ function updateValues () {
 
 
 }
-// done
+// fail issue (TypeError: undefined is not an object (evaluating 'arrayOfHistory[selectedFigure - 1][0] = rotateAxis[0]'))
 function updateHistory () {
+
+  console.log(arrayOfHistory[selectedFigure - 1]);
+  console.log(arrayOfHistory);
 
  arrayOfHistory[selectedFigure - 1][0] = rotateAxis[0];
  arrayOfHistory[selectedFigure - 1][1] = rotateAxis[1];
@@ -563,6 +555,8 @@ function rightClick(ev, gl) {
   document.getElementById("surface").max = (arrayFigures.length + 1);
   document.getElementById("surface").value = arrayFigures.length + 1;
 
+  modelMatrix.push(new Matrix4());
+
   selectedFigure = arrayFigures.length + 1;
   kendoConsole.log(selectedFigure);
 
@@ -573,7 +567,7 @@ function rightClick(ev, gl) {
 
     resetInput();
 
-    modelMatrix.push(new Matrix4());
+
     index++;
   }
 }
